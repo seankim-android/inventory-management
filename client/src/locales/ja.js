@@ -7,6 +7,11 @@ export default {
     finance: '財務',
     demandForecast: '需要予測',
     restocking: '補充発注',
+    reports: 'レポート',
+    closeMenu: 'メニューを閉じる',
+    openMenu: 'メニューを開く',
+    collapseSidebar: 'サイドバーを折りたたむ',
+    expandSidebar: 'サイドバーを展開',
     companyName: '触媒コンポーネンツ',
     subtitle: '在庫管理システム'
   },
@@ -342,6 +347,7 @@ export default {
     priority: '優先度',
     dueDate: '期限',
     addTask: 'タスクを追加',
+    deleteTask: 'タスクを削除',
     noTasks: 'タスクがありません。上記からタスクを追加してください！'
   },
 
