@@ -75,6 +75,43 @@
         </div>
       </div>
     </div>
+
+    <div class="card submitted-orders">
+      <div class="card-header">
+        <h3 class="card-title">{{ t('orders.submitted.title') }} ({{ submittedOrders.length }})</h3>
+      </div>
+      <div v-if="submittedLoading" class="loading">{{ t('common.loading') }}</div>
+      <div v-else-if="submittedError" class="error">{{ submittedError }}</div>
+      <div v-else-if="submittedOrders.length === 0" class="empty-state">{{ t('orders.submitted.empty') }}</div>
+      <div v-else class="table-container">
+        <table class="submitted-table">
+          <thead>
+            <tr>
+              <th>{{ t('orders.submitted.orderNumber') }}</th>
+              <th>{{ t('orders.submitted.submittedDate') }}</th>
+              <th>{{ t('orders.submitted.items') }}</th>
+              <th class="num">{{ t('orders.submitted.totalCost') }}</th>
+              <th class="num">{{ t('orders.submitted.leadTime') }}</th>
+              <th>{{ t('orders.submitted.expectedDelivery') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="order in submittedOrders" :key="order.id">
+              <td><strong>{{ order.order_number }}</strong></td>
+              <td>{{ formatDate(order.submitted_date) }}</td>
+              <td>
+                <div v-for="item in order.items" :key="item.sku" class="submitted-item">
+                  {{ item.name }} <span class="item-meta">({{ item.sku }}) x {{ item.quantity.toLocaleString() }}</span>
+                </div>
+              </td>
+              <td class="num"><strong>{{ formatMoney(order.total_cost) }}</strong></td>
+              <td class="num">{{ t('orders.submitted.leadTimeDays', { days: order.lead_time_days }) }}</td>
+              <td>{{ formatDate(order.expected_delivery) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -83,6 +120,8 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { api } from '../api'
 import { useFilters } from '../composables/useFilters'
 import { useI18n } from '../composables/useI18n'
+import { formatCurrencyWithDecimals } from '../utils/currency'
+import { parseDate } from '../utils/date'
 
 export default {
   name: 'Orders',
@@ -143,19 +182,47 @@ export default {
       return statusMap[status] || 'info'
     }
 
+    const submittedOrders = ref([])
+    const submittedLoading = ref(true)
+    const submittedError = ref(null)
+
+    const loadSubmittedOrders = async () => {
+      try {
+        submittedLoading.value = true
+        submittedError.value = null
+        submittedOrders.value = await api.getRestockingOrders()
+      } catch (err) {
+        submittedError.value = t('orders.submitted.error')
+        console.error(err)
+      } finally {
+        submittedLoading.value = false
+      }
+    }
+
+    const formatMoney = (amount) => formatCurrencyWithDecimals(amount, currentCurrency.value, 2)
+
     const formatDate = (dateString) => {
       const { currentLocale } = useI18n()
       const locale = currentLocale.value === 'ja' ? 'ja-JP' : 'en-US'
-      return new Date(dateString).toLocaleDateString(locale, {
+      const date = parseDate(dateString)
+      if (isNaN(date.getTime())) return dateString
+      return date.toLocaleDateString(locale, {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
       })
     }
 
-    onMounted(loadOrders)
+    onMounted(() => {
+      loadOrders()
+      loadSubmittedOrders()
+    })
 
     return {
+      submittedOrders,
+      submittedLoading,
+      submittedError,
+      formatMoney,
       t,
       loading,
       error,
@@ -275,5 +342,25 @@ export default {
 .item-meta {
   font-size: 0.813rem;
   color: #64748b;
+}
+
+.submitted-orders {
+  margin-top: 1.25rem;
+}
+
+.submitted-table .num {
+  text-align: right;
+}
+
+.submitted-item {
+  font-size: 0.875rem;
+  color: #0f172a;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+  font-size: 0.938rem;
 }
 </style>
