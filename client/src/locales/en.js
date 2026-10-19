@@ -352,6 +352,37 @@ export default {
     selectLanguage: 'Select Language'
   },
 
+  // Purchase Order Modal
+  purchaseOrder: {
+    createTitle: 'Create Purchase Order',
+    viewTitle: 'Purchase Order Details',
+    item: 'Item',
+    shortage: 'Shortage',
+    supplierName: 'Supplier Name',
+    quantity: 'Quantity',
+    unitCost: 'Unit Cost (USD)',
+    expectedDeliveryDate: 'Expected Delivery Date',
+    notes: 'Notes',
+    notesPlaceholder: 'Optional notes for the supplier',
+    totalCost: 'Total Cost',
+    poNumber: 'PO Number',
+    status: 'Status',
+    createdDate: 'Created Date',
+    submit: 'Create Purchase Order',
+    submitting: 'Creating...',
+    loadingPO: 'Loading purchase order...',
+    notFound: 'No purchase order was found for this item.',
+    loadFailed: 'Failed to load the purchase order.',
+    createFailed: 'Failed to create the purchase order.',
+    errors: {
+      supplierRequired: 'Supplier name is required.',
+      quantityInvalid: 'Quantity must be a whole number greater than 0.',
+      unitCostInvalid: 'Unit cost must be greater than 0.',
+      dateRequired: 'Expected delivery date is required.',
+      dateInvalid: 'Expected delivery date is not a valid date.'
+    }
+  },
+
   // Common
   common: {
     loading: 'Loading...',

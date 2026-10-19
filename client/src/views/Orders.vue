@@ -56,7 +56,7 @@
                     <div class="items-dropdown">
                       <div v-for="(item, idx) in order.items" :key="idx" class="item-entry">
                         <span class="item-name">{{ translateProductName(item.name) }}</span>
-                        <span class="item-meta">{{ t('orders.quantity') }}: {{ item.quantity }} @ {{ currencySymbol }}{{ item.unit_price }}</span>
+                        <span class="item-meta">{{ t('orders.quantity') }}: {{ item.quantity }} @ {{ money(item.unit_price, 2) }}</span>
                       </div>
                     </div>
                   </details>
@@ -68,7 +68,7 @@
                 </td>
                 <td class="col-date">{{ formatDate(order.order_date) }}</td>
                 <td class="col-date">{{ formatDate(order.expected_delivery) }}</td>
-                <td class="col-value"><strong>{{ currencySymbol }}{{ order.total_value.toLocaleString() }}</strong></td>
+                <td class="col-value"><strong>{{ money(order.total_value) }}</strong></td>
               </tr>
             </tbody>
           </table>
@@ -104,7 +104,7 @@
                   {{ item.name }} <span class="item-meta">({{ item.sku }}) x {{ item.quantity.toLocaleString() }}</span>
                 </div>
               </td>
-              <td class="num"><strong>{{ formatMoney(order.total_cost) }}</strong></td>
+              <td class="num"><strong>{{ money(order.total_cost, 2) }}</strong></td>
               <td class="num">{{ t('orders.submitted.leadTimeDays', { days: order.lead_time_days }) }}</td>
               <td>{{ formatDate(order.expected_delivery) }}</td>
             </tr>
@@ -127,10 +127,7 @@ export default {
   name: 'Orders',
   setup() {
     const { t, currentCurrency, translateProductName, translateCustomerName } = useI18n()
-
-    const currencySymbol = computed(() => {
-      return currentCurrency.value === 'JPY' ? '¥' : '$'
-    })
+    const money = (amount, decimals = 0) => formatCurrencyWithDecimals(amount, currentCurrency.value, decimals)
     const loading = ref(true)
     const error = ref(null)
     const orders = ref([])
@@ -199,8 +196,6 @@ export default {
       }
     }
 
-    const formatMoney = (amount) => formatCurrencyWithDecimals(amount, currentCurrency.value, 2)
-
     const formatDate = (dateString) => {
       const { currentLocale } = useI18n()
       const locale = currentLocale.value === 'ja' ? 'ja-JP' : 'en-US'
@@ -222,7 +217,6 @@ export default {
       submittedOrders,
       submittedLoading,
       submittedError,
-      formatMoney,
       t,
       loading,
       error,
@@ -230,7 +224,7 @@ export default {
       getOrdersByStatus,
       getOrderStatusClass,
       formatDate,
-      currencySymbol,
+      money,
       translateProductName,
       translateCustomerName
     }

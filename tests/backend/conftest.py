@@ -12,6 +12,7 @@ server_path = Path(__file__).parent.parent.parent / "server"
 sys.path.insert(0, str(server_path))
 
 from main import app
+from mock_data import purchase_orders
 
 
 @pytest.fixture
@@ -19,6 +20,14 @@ def client():
     """Create a test client for the FastAPI application."""
     with TestClient(app) as test_client:
         yield test_client
+
+
+@pytest.fixture(autouse=True)
+def reset_purchase_orders():
+    """Restore the in-memory purchase order list after each test."""
+    snapshot = list(purchase_orders)
+    yield
+    purchase_orders[:] = snapshot
 
 
 @pytest.fixture
