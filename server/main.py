@@ -1,7 +1,9 @@
+import re
+from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from mock_data import inventory_items, orders, demand_forecasts, backlog_items, spending_summary, monthly_spending, category_spending, recent_transactions, purchase_orders
 
 app = FastAPI(title="Factory Inventory Management System")
@@ -14,21 +16,25 @@ QUARTER_MAP = {
     'Q4-2025': ['2025-10', '2025-11', '2025-12']
 }
 
+MONTH_PATTERN = re.compile(r'^\d{4}-\d{2}$')
+
 def filter_by_month(items: list, month: Optional[str]) -> list:
-    """Filter items by month/quarter based on order_date field"""
-    if not month or month == 'all':
+    """Filter items by month (YYYY-MM) or quarter (e.g. Q1-2025) based on order_date field"""
+    if not month or month.lower() == 'all':
         return items
 
-    if month.startswith('Q'):
-        # Handle quarters
-        if month in QUARTER_MAP:
-            months = QUARTER_MAP[month]
-            return [item for item in items if any(m in item.get('order_date', '') for m in months)]
-    else:
-        # Direct month match
-        return [item for item in items if month in item.get('order_date', '')]
+    if MONTH_PATTERN.match(month):
+        return [item for item in items if item.get('order_date', '').startswith(month)]
 
-    return items
+    quarter = month.upper()
+    if quarter in QUARTER_MAP:
+        months = tuple(QUARTER_MAP[quarter])
+        return [item for item in items if item.get('order_date', '').startswith(months)]
+
+    raise HTTPException(
+        status_code=400,
+        detail=f"Invalid month '{month}'. Use 'all', YYYY-MM, or a quarter such as {', '.join(QUARTER_MAP)}"
+    )
 
 def apply_filters(items: list, warehouse: Optional[str] = None, category: Optional[str] = None,
                  status: Optional[str] = None) -> list:
@@ -100,6 +106,7 @@ class BacklogItem(BaseModel):
     days_delayed: int
     priority: str
     has_purchase_order: Optional[bool] = False
+    purchase_order_id: Optional[str] = None
 
 class PurchaseOrder(BaseModel):
     id: str
@@ -115,8 +122,8 @@ class PurchaseOrder(BaseModel):
 class CreatePurchaseOrderRequest(BaseModel):
     backlog_item_id: str
     supplier_name: str
-    quantity: int
-    unit_cost: float
+    quantity: int = Field(gt=0)
+    unit_cost: float = Field(gt=0)
     expected_delivery_date: str
     notes: Optional[str] = None
 
@@ -169,15 +176,43 @@ def get_demand_forecasts():
 @app.get("/api/backlog", response_model=List[BacklogItem])
 def get_backlog():
     """Get backlog items with purchase order status"""
-    # Add has_purchase_order flag to each backlog item
     result = []
     for item in backlog_items:
         item_dict = dict(item)
-        # Check if this backlog item has a purchase order
-        has_po = any(po["backlog_item_id"] == item["id"] for po in purchase_orders)
-        item_dict["has_purchase_order"] = has_po
+        po = latest_purchase_order(item["id"])
+        item_dict["has_purchase_order"] = po is not None
+        item_dict["purchase_order_id"] = po["id"] if po else None
         result.append(item_dict)
     return result
+
+def latest_purchase_order(backlog_item_id: str) -> Optional[dict]:
+    """Most recently created purchase order for a backlog item, or None"""
+    matches = [po for po in purchase_orders if po["backlog_item_id"] == backlog_item_id]
+    return matches[-1] if matches else None
+
+@app.post("/api/purchase-orders", response_model=PurchaseOrder, status_code=201)
+def create_purchase_order(request: CreatePurchaseOrderRequest):
+    """Create a purchase order for a backlog item"""
+    if not any(item["id"] == request.backlog_item_id for item in backlog_items):
+        raise HTTPException(status_code=404, detail=f"Backlog item {request.backlog_item_id} not found")
+
+    next_id = max((int(po["id"]) for po in purchase_orders if po["id"].isdigit()), default=0) + 1
+    po = {
+        **request.model_dump(),
+        "id": str(next_id),
+        "status": "Pending",
+        "created_date": datetime.now().isoformat(timespec="seconds"),
+    }
+    purchase_orders.append(po)
+    return po
+
+@app.get("/api/purchase-orders/{backlog_item_id}", response_model=PurchaseOrder)
+def get_purchase_order(backlog_item_id: str):
+    """Get the most recent purchase order for a backlog item"""
+    po = latest_purchase_order(backlog_item_id)
+    if po is None:
+        raise HTTPException(status_code=404, detail=f"Purchase order for backlog item {backlog_item_id} not found")
+    return po
 
 @app.get("/api/dashboard/summary")
 def get_dashboard_summary(

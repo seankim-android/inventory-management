@@ -311,6 +311,37 @@ export default {
     selectLanguage: '言語を選択'
   },
 
+  // 発注書モーダル
+  purchaseOrder: {
+    createTitle: '発注書の作成',
+    viewTitle: '発注書の詳細',
+    item: '品目',
+    shortage: '不足数',
+    supplierName: '仕入先名',
+    quantity: '数量',
+    unitCost: '単価 (USD)',
+    expectedDeliveryDate: '納品予定日',
+    notes: '備考',
+    notesPlaceholder: '仕入先向けの備考 (任意)',
+    totalCost: '合計金額',
+    poNumber: '発注番号',
+    status: 'ステータス',
+    createdDate: '作成日',
+    submit: '発注書を作成',
+    submitting: '作成中...',
+    loadingPO: '発注書を読み込み中...',
+    notFound: 'この品目の発注書は見つかりませんでした。',
+    loadFailed: '発注書の読み込みに失敗しました。',
+    createFailed: '発注書の作成に失敗しました。',
+    errors: {
+      supplierRequired: '仕入先名は必須です。',
+      quantityInvalid: '数量は1以上の整数で入力してください。',
+      unitCostInvalid: '単価は0より大きい値で入力してください。',
+      dateRequired: '納品予定日は必須です。',
+      dateInvalid: '納品予定日が正しい日付ではありません。'
+    }
+  },
+
   // Common
   common: {
     loading: '読み込み中...',
