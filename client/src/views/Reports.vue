@@ -1,20 +1,56 @@
 <template>
   <div class="reports">
-    <div class="page-header">
-      <h2>Performance Reports</h2>
-      <p>View quarterly performance metrics and monthly trends</p>
-    </div>
-
     <div v-if="loading" class="loading">Loading reports...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else>
+      <!-- Summary Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Revenue (YTD)</div>
+          <div class="stat-value">${{ formatNumber(totalRevenue) }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg Monthly Revenue</div>
+          <div class="stat-value">${{ formatNumber(avgMonthlyRevenue) }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Orders (YTD)</div>
+          <div class="stat-value">{{ totalOrders }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Best Performing Quarter</div>
+          <div class="stat-value">{{ bestQuarter }}</div>
+        </div>
+      </div>
+
+      <!-- Monthly Trends Chart -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Monthly Revenue Trend</h3>
+        </div>
+        <div class="chart-container">
+          <div class="bar-chart">
+            <div v-for="month in monthlyData" :key="month.month" class="bar-wrapper">
+              <div class="bar-container">
+                <div
+                  class="bar"
+                  :style="{ height: getBarHeight(month.revenue) + 'px' }"
+                  :title="'$' + formatNumber(month.revenue)"
+                ></div>
+              </div>
+              <div class="bar-label">{{ formatMonth(month.month) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Quarterly Performance -->
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">Quarterly Performance</h3>
         </div>
         <div class="table-container">
-          <table class="reports-table">
+          <table class="data-table zebra">
             <thead>
               <tr>
                 <th>Quarter</th>
@@ -25,7 +61,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(q, index) in quarterlyData" :key="index">
+              <tr v-for="q in quarterlyData" :key="q.quarter">
                 <td><strong>{{ q.quarter }}</strong></td>
                 <td>{{ q.total_orders }}</td>
                 <td>${{ formatNumber(q.total_revenue) }}</td>
@@ -41,34 +77,13 @@
         </div>
       </div>
 
-      <!-- Monthly Trends Chart -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">Monthly Revenue Trend</h3>
-        </div>
-        <div class="chart-container">
-          <div class="bar-chart">
-            <div v-for="(month, index) in monthlyData" :key="index" class="bar-wrapper">
-              <div class="bar-container">
-                <div
-                  class="bar"
-                  :style="{ height: getBarHeight(month.revenue) + 'px' }"
-                  :title="'$' + formatNumber(month.revenue)"
-                ></div>
-              </div>
-              <div class="bar-label">{{ formatMonth(month.month) }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Month-over-Month Comparison -->
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">Month-over-Month Analysis</h3>
         </div>
         <div class="table-container">
-          <table class="reports-table">
+          <table class="data-table zebra">
             <thead>
               <tr>
                 <th>Month</th>
@@ -79,7 +94,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(month, index) in monthlyData" :key="index">
+              <tr v-for="(month, index) in monthlyData" :key="month.month">
                 <td><strong>{{ formatMonth(month.month) }}</strong></td>
                 <td>{{ month.order_count }}</td>
                 <td>${{ formatNumber(month.revenue) }}</td>
@@ -98,26 +113,6 @@
               </tr>
             </tbody>
           </table>
-        </div>
-      </div>
-
-      <!-- Summary Stats -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">Total Revenue (YTD)</div>
-          <div class="stat-value">${{ formatNumber(totalRevenue) }}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Avg Monthly Revenue</div>
-          <div class="stat-value">${{ formatNumber(avgMonthlyRevenue) }}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Orders (YTD)</div>
-          <div class="stat-value">{{ totalOrders }}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Best Performing Quarter</div>
-          <div class="stat-value">{{ bestQuarter }}</div>
         </div>
       </div>
     </div>
@@ -317,63 +312,18 @@ export default {
 </script>
 
 <style scoped>
-.reports {
-  padding: 0;
-}
-
-.card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.card-header {
-  margin-bottom: 1.5rem;
-}
-
-.card-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0;
-}
-
-.reports-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.reports-table th {
-  background: #f8fafc;
-  padding: 0.75rem;
-  text-align: left;
-  font-weight: 600;
-  color: #64748b;
-  border-bottom: 2px solid #e2e8f0;
-}
-
-.reports-table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.reports-table tr:hover {
-  background: #f8fafc;
-}
-
 .chart-container {
-  padding: 2rem 1rem;
-  min-height: 300px;
+  padding: var(--space-4) var(--space-2) var(--space-2);
+  overflow-x: auto;
 }
 
 .bar-chart {
   display: flex;
   align-items: flex-end;
   justify-content: space-around;
-  height: 250px;
-  gap: 0.5rem;
+  height: 260px;
+  gap: var(--space-2);
+  min-width: 420px;
 }
 
 .bar-wrapper {
@@ -393,96 +343,32 @@ export default {
 
 .bar {
   width: 100%;
-  background: linear-gradient(to top, #3b82f6, #60a5fa);
-  border-radius: 4px 4px 0 0;
-  transition: all 0.3s;
+  background: var(--primary-500);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: background var(--transition-base);
   cursor: pointer;
 }
 
 .bar:hover {
-  background: linear-gradient(to top, #2563eb, #3b82f6);
+  background: var(--color-primary);
 }
 
 .bar-label {
-  margin-top: 0.5rem;
-  font-size: 0.75rem;
-  color: #64748b;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
   text-align: center;
   transform: rotate(-45deg);
   white-space: nowrap;
-  margin-top: 1.5rem;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-left: 4px solid #3b82f6;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: #64748b;
-  margin-bottom: 0.5rem;
-}
-
-.stat-value {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.badge.success {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.badge.warning {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.badge.danger {
-  background: #fee2e2;
-  color: #991b1b;
+  margin-top: var(--space-6);
 }
 
 .positive-change {
-  color: #16a34a;
-  font-weight: 600;
+  color: var(--color-success);
+  font-weight: var(--weight-semibold);
 }
 
 .negative-change {
-  color: #dc2626;
-  font-weight: 600;
-}
-
-.loading {
-  text-align: center;
-  padding: 3rem;
-  color: #64748b;
-}
-
-.error {
-  background: #fee2e2;
-  color: #991b1b;
-  padding: 1rem;
-  border-radius: 8px;
-  margin: 1rem 0;
+  color: var(--color-danger);
+  font-weight: var(--weight-semibold);
 }
 </style>

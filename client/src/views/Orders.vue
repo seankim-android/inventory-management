@@ -1,9 +1,6 @@
 <template>
   <div class="orders">
-    <div class="page-header">
-      <h2>{{ t('orders.title') }}</h2>
-      <p>{{ t('orders.description') }}</p>
-    </div>
+    <p class="page-subtitle">{{ t('orders.description') }}</p>
 
     <div v-if="loading" class="loading">{{ t('common.loading') }}</div>
     <div v-else-if="error" class="error">{{ error }}</div>
@@ -27,12 +24,12 @@
         </div>
       </div>
 
-      <div class="card">
+      <div class="card table-card">
         <div class="card-header">
           <h3 class="card-title">{{ t('orders.allOrders') }} ({{ orders.length }})</h3>
         </div>
         <div class="table-container">
-          <table class="orders-table">
+          <table class="data-table orders-table">
             <thead>
               <tr>
                 <th class="col-order-number">{{ t('orders.table.orderNumber') }}</th>
@@ -41,7 +38,7 @@
                 <th class="col-status">{{ t('orders.table.status') }}</th>
                 <th class="col-date">{{ t('orders.table.orderDate') }}</th>
                 <th class="col-date">{{ t('orders.table.expectedDelivery') }}</th>
-                <th class="col-value">{{ t('orders.table.totalValue') }}</th>
+                <th class="col-value text-right">{{ t('orders.table.totalValue') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -54,7 +51,7 @@
                       {{ t('orders.itemsCount', { count: order.items.length }) }}
                     </summary>
                     <div class="items-dropdown">
-                      <div v-for="(item, idx) in order.items" :key="idx" class="item-entry">
+                      <div v-for="item in order.items" :key="`${item.sku}-${item.unit_price}-${item.quantity}`" class="item-entry">
                         <span class="item-name">{{ translateProductName(item.name) }}</span>
                         <span class="item-meta">{{ t('orders.quantity') }}: {{ item.quantity }} @ {{ money(item.unit_price, 2) }}</span>
                       </div>
@@ -68,7 +65,7 @@
                 </td>
                 <td class="col-date">{{ formatDate(order.order_date) }}</td>
                 <td class="col-date">{{ formatDate(order.expected_delivery) }}</td>
-                <td class="col-value"><strong>{{ money(order.total_value) }}</strong></td>
+                <td class="col-value text-right"><strong>{{ money(order.total_value) }}</strong></td>
               </tr>
             </tbody>
           </table>
@@ -76,7 +73,7 @@
       </div>
     </div>
 
-    <div class="card submitted-orders">
+    <div class="card table-card submitted-orders">
       <div class="card-header">
         <h3 class="card-title">{{ t('orders.submitted.title') }} ({{ submittedOrders.length }})</h3>
       </div>
@@ -84,14 +81,14 @@
       <div v-else-if="submittedError" class="error">{{ submittedError }}</div>
       <div v-else-if="submittedOrders.length === 0" class="empty-state">{{ t('orders.submitted.empty') }}</div>
       <div v-else class="table-container">
-        <table class="submitted-table">
+        <table class="data-table submitted-table">
           <thead>
             <tr>
               <th>{{ t('orders.submitted.orderNumber') }}</th>
               <th>{{ t('orders.submitted.submittedDate') }}</th>
               <th>{{ t('orders.submitted.items') }}</th>
-              <th class="num">{{ t('orders.submitted.totalCost') }}</th>
-              <th class="num">{{ t('orders.submitted.leadTime') }}</th>
+              <th class="num text-right">{{ t('orders.submitted.totalCost') }}</th>
+              <th class="num text-right">{{ t('orders.submitted.leadTime') }}</th>
               <th>{{ t('orders.submitted.expectedDelivery') }}</th>
             </tr>
           </thead>
@@ -104,8 +101,8 @@
                   {{ item.name }} <span class="item-meta">({{ item.sku }}) x {{ item.quantity.toLocaleString() }}</span>
                 </div>
               </td>
-              <td class="num"><strong>{{ money(order.total_cost, 2) }}</strong></td>
-              <td class="num">{{ t('orders.submitted.leadTimeDays', { days: order.lead_time_days }) }}</td>
+              <td class="num text-right"><strong>{{ money(order.total_cost, 2) }}</strong></td>
+              <td class="num text-right">{{ t('orders.submitted.leadTimeDays', { days: order.lead_time_days }) }}</td>
               <td>{{ formatDate(order.expected_delivery) }}</td>
             </tr>
           </tbody>
@@ -233,15 +230,41 @@ export default {
 </script>
 
 <style scoped>
+.page-subtitle {
+  margin-bottom: var(--space-5);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.table-card {
+  padding: 0;
+}
+
+.table-card .loading,
+.table-card .error,
+.table-card .empty-state {
+  padding: var(--space-8) var(--space-5);
+}
+
+.table-card .card-header {
+  margin-bottom: 0;
+  padding: var(--space-4) var(--space-5);
+}
+
 /* Fixed table layout to prevent column shifting */
 .orders-table {
   table-layout: fixed;
   width: 100%;
 }
 
+.orders-table td {
+  vertical-align: top;
+}
+
 /* Column widths */
 .col-order-number {
-  width: 130px;
+  width: 160px;
+  white-space: nowrap;
 }
 
 .col-customer {
@@ -266,13 +289,13 @@ export default {
 
 /* Items details styling */
 .items-details {
-  position: relative;
+  min-width: 0;
 }
 
 .items-summary {
   cursor: pointer;
-  color: #3b82f6;
-  font-weight: 500;
+  color: var(--color-primary);
+  font-weight: var(--weight-medium);
   list-style: none;
   user-select: none;
   display: inline-block;
@@ -283,11 +306,13 @@ export default {
 }
 
 .items-summary::before {
-  content: '▶';
+  content: '';
   display: inline-block;
-  margin-right: 0.375rem;
-  font-size: 0.75rem;
-  transition: transform 0.2s;
+  margin-right: var(--space-2);
+  border-style: solid;
+  border-width: 4px 0 4px 6px;
+  border-color: transparent transparent transparent currentColor;
+  transition: transform var(--transition-base);
 }
 
 .items-details[open] .items-summary::before {
@@ -295,32 +320,27 @@ export default {
 }
 
 .items-summary:hover {
-  color: #2563eb;
+  color: var(--color-primary-hover);
   text-decoration: underline;
 }
 
-/* Dropdown container */
+/* Expands inline within the cell so the scrollable table container never clips it */
 .items-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: 0.5rem;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  padding: 0.75rem;
-  z-index: 10;
-  min-width: 300px;
-  max-width: 400px;
+  margin-top: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-2);
+  min-width: 0;
 }
 
 .item-entry {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--slate-100);
 }
 
 .item-entry:last-child {
@@ -328,33 +348,25 @@ export default {
 }
 
 .item-name {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #0f172a;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
 }
 
 .item-meta {
-  font-size: 0.813rem;
-  color: #64748b;
-}
-
-.submitted-orders {
-  margin-top: 1.25rem;
-}
-
-.submitted-table .num {
-  text-align: right;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
 }
 
 .submitted-item {
-  font-size: 0.875rem;
-  color: #0f172a;
+  font-size: var(--text-sm);
+  color: var(--color-text);
 }
 
 .empty-state {
   text-align: center;
-  padding: 2rem;
-  color: #64748b;
-  font-size: 0.938rem;
+  padding: var(--space-8);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
 }
 </style>

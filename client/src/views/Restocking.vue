@@ -111,7 +111,6 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
 <template>
   <div class="restocking">
     <div class="page-header">
-      <h2>{{ t('restocking.title') }}</h2>
       <p>{{ t('restocking.description') }}</p>
     </div>
 
@@ -146,7 +145,7 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
         <div :class="{ refreshing: loading || pendingFetch }">
           <div v-if="items.length === 0" class="empty">{{ t('restocking.empty') }}</div>
           <div v-else class="table-container">
-            <table>
+            <table class="data-table zebra">
               <thead>
                 <tr>
                   <th>{{ t('restocking.table.sku') }}</th>
@@ -190,7 +189,7 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
             <span class="summary-label">{{ t('restocking.maxLeadTime') }}</span>
             <span class="summary-value">{{ t('restocking.leadTimeDays', { days: maxLeadTime }) }}</span>
           </div>
-          <button type="button" class="place-order" :disabled="!canSubmit" @click="placeOrder">
+          <button type="button" class="btn btn-primary place-order" :disabled="!canSubmit" @click="placeOrder">
             {{ submitting ? t('restocking.submitting') : t('restocking.placeOrder') }}
           </button>
         </div>
@@ -205,36 +204,43 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
 </template>
 
 <style scoped>
+.page-header {
+  margin-bottom: var(--space-5);
+}
+
 .budget-row {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 0.75rem;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 
 .budget-label {
-  font-weight: 600;
-  color: #475569;
-  font-size: 0.875rem;
+  font-weight: var(--weight-semibold);
+  color: var(--slate-600);
+  font-size: var(--text-sm);
 }
 
 .budget-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
+  letter-spacing: var(--tracking-tight);
 }
 
 .budget-slider {
   width: 100%;
-  accent-color: #0f172a;
+  accent-color: var(--color-primary);
+  cursor: pointer;
 }
 
 .slider-scale {
   display: flex;
   justify-content: space-between;
-  font-size: 0.75rem;
-  color: #64748b;
-  margin-top: 0.25rem;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
 }
 
 .num {
@@ -242,81 +248,74 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
 }
 
 .reason {
-  color: #64748b;
-  font-size: 0.813rem;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  min-width: 200px;
 }
 
 .refreshing {
   opacity: 0.6;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--transition-fast);
 }
 
 .empty {
   text-align: center;
-  padding: 2rem;
-  color: #64748b;
-  font-size: 0.938rem;
+  padding: var(--space-8);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
 }
 
 .summary {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 1.5rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
+  gap: var(--space-3) var(--space-6);
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
 }
 
 .summary-item {
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
+  gap: 2px;
 }
 
 .summary-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #64748b;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-wide);
 }
 
 .summary-value {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #0f172a;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
 }
 
 .place-order {
   margin-left: auto;
-  padding: 0.625rem 1.5rem;
-  background: #0f172a;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.place-order:hover:not(:disabled) {
-  background: #1e293b;
-}
-
-.place-order:disabled {
-  background: #cbd5e1;
-  cursor: not-allowed;
+  padding: var(--space-2) var(--space-5);
 }
 
 .success {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  color: #166534;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-top: 1rem;
-  font-size: 0.938rem;
+  background: var(--color-success-soft);
+  border: 1px solid var(--color-success);
+  color: var(--color-success-text);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 639px) {
+  .place-order {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 </style>

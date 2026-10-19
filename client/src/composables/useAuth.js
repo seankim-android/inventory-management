@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import { useI18n } from './useI18n'
 
 // Base user data (language-independent)
@@ -17,7 +17,8 @@ const createCurrentUser = () => {
   return computed(() => {
     const isJapanese = currentLocale.value === 'ja'
 
-    return {
+    // reactive() so toggling/deleting mock tasks re-renders the UI
+    return reactive({
       ...baseUserData,
       name: isJapanese ? '田中 太郎' : 'John Doe',
       jobTitle: isJapanese ? 'オペレーションマネージャー' : 'Operations Manager',
@@ -82,7 +83,7 @@ const createCurrentUser = () => {
           status: 'pending'
         }
       ]
-    }
+    })
   })
 }
 
